@@ -9,8 +9,8 @@ using System.Net.Http;
 
 namespace WebApiContrib.IoC.StructureMap
 {
-	public class StructureMapDependencyScope : IDependencyScope
-	{
+    public class StructureMapDependencyScope : IDependencyScope
+    {
         private IContainer container;
 
         public StructureMapDependencyScope(IContainer container)
@@ -23,33 +23,33 @@ namespace WebApiContrib.IoC.StructureMap
 
         public object GetService(Type serviceType)
         {
-			if (container == null)
-				throw new ObjectDisposedException("this", "This scope has already been disposed.");
+            if (container == null)
+                throw new ObjectDisposedException("this", "This scope has already been disposed.");
 
             return container.TryGetInstance(serviceType);
         }
 
         public IEnumerable<object> GetServices(Type serviceType)
         {
-			if (container == null)
-				throw new ObjectDisposedException("this", "This scope has already been disposed.");
+            if (container == null)
+                throw new ObjectDisposedException("this", "This scope has already been disposed.");
 
             return container.GetAllInstances(serviceType).Cast<object>();
         }
 
-		public void Dispose()
-		{
-			container.Dispose();
-			container = null;
-		}
-	}
+        public void Dispose()
+        {
+            container.Dispose();
+            container = null;
+        }
+    }
 
     public class StructureMapResolver : StructureMapDependencyScope, IDependencyResolver, IHttpControllerActivator
     {
         private readonly IContainer container;
 
         public StructureMapResolver(IContainer container)
-			: base(container)
+            : base(container)
         {
             if (container == null)
                 throw new ArgumentNullException("container");
@@ -59,14 +59,14 @@ namespace WebApiContrib.IoC.StructureMap
             this.container.Inject(typeof(IHttpControllerActivator), this);
         }
 
-    	public IDependencyScope BeginScope()
-    	{
-			return new StructureMapDependencyScope(container.GetNestedContainer());
-    	}
+        public IDependencyScope BeginScope()
+        {
+            return new StructureMapDependencyScope(container.GetNestedContainer());
+        }
 
-    	public IHttpController Create(HttpRequestMessage request, HttpControllerDescriptor controllerDescriptor, Type controllerType)
-    	{
+        public IHttpController Create(HttpRequestMessage request, HttpControllerDescriptor controllerDescriptor, Type controllerType)
+        {
             return (IHttpController) container.GetInstance(controllerType);
-    	}
+        }
     }
 }
