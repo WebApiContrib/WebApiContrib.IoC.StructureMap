@@ -1,13 +1,9 @@
 ﻿using System.Linq;
 using System.Net.Http;
 using System.Web.Http;
-using System.Web.Http.Controllers;
-using System.Web.Http.Dispatcher;
 using NUnit.Framework;
-using Rhino.Mocks;
 using Should;
 using StructureMap;
-using WebApiContrib.IoC.StructureMap;
 using WebApiContrib.IoC.StructureMap.Tests.Helpers;
 
 namespace WebApiContrib.IoC.StructureMap.Tests.IoC
@@ -16,23 +12,45 @@ namespace WebApiContrib.IoC.StructureMap.Tests.IoC
     public class DependencyInjectionTests
     {
         [Test]
-        public void StructureMapResolver_should_be_returned_for_IHttpControllerActivator_WithDefaultConventions()
+        public void StructureMapResolver_should_resolve_registered_ContactRepository()
         {
-            // When building up a SM container, this is the only thing that doesn't get
-            // resolved "nicely" when using default conventions.
-            var container = new Container(x => x.Scan(s =>
-            {
-                s.TheCallingAssembly();
-                s.WithDefaultConventions();
-            }));
+            var resolver = new StructureMapResolver(new Container(x =>
+                x.For<IContactRepository>().Use<InMemoryContactRepository>()
+            ));
+
+            var instance = resolver.GetService(typeof(IContactRepository));
+
+            Assert.IsNotNull(instance);
+        }
+
+        [Test]
+        public void StructureMapResolver_should_not_resolve_unregistered_ContactRepository()
+        {
+            var resolver = new StructureMapResolver(new Container());
+
+            var instance = resolver.GetService(typeof(IContactRepository));
+
+            Assert.IsNull(instance);
+        }
+
+        [Test]
+        public void StructureMapResolver_should_resolve_registered_ContactRepository_through_host()
+        {
             var config = new HttpConfiguration();
-            var resolver = new StructureMapResolver(container);
+            config.Routes.MapHttpRoute("default", "api/{controller}/{id}", new { id = RouteParameter.Optional });
 
-            config.DependencyResolver = resolver;
+            config.DependencyResolver = new StructureMapResolver(new Container(x =>
+                x.For<IContactRepository>().Use<InMemoryContactRepository>()
+            ));
 
-            var actualActivator = config.Services.GetService(typeof (IHttpControllerActivator));
+            var server = new HttpServer(config);
+            var client = new HttpClient(server);
 
-            actualActivator.ShouldBeSameAs(resolver);
+            client.GetAsync("http://anything/api/contacts").ContinueWith(task =>
+            {
+                var response = task.Result;
+                Assert.IsNotNull(response.Content);
+            });
         }
 
         [Test]
@@ -62,18 +80,6 @@ namespace WebApiContrib.IoC.StructureMap.Tests.IoC
             var repositories = config.DependencyResolver.GetServices(typeof(IContactRepository));
 
             repositories.Count().ShouldEqual(0);
-        }
-
-        [Test]
-        public void StructureMapResolver_Create_should_delegate_to_GetInstance()
-        {
-            var container = MockRepository.GenerateMock<IContainer>();
-            var resolver = new StructureMapResolver(container);
-            var controllerType = typeof (ContactsController);
-
-            resolver.Create(new HttpRequestMessage(), new HttpControllerDescriptor(), controllerType);
-
-            container.AssertWasCalled(x => x.GetInstance(controllerType));
         }
     }
 }
