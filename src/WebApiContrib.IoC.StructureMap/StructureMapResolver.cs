@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Web.Http.Controllers;
 using System.Web.Http.Dependencies;
 using System.Web.Http.Dispatcher;
 using StructureMap;
-using System.Net.Http;
 
 namespace WebApiContrib.IoC.StructureMap
 {
@@ -56,7 +56,7 @@ namespace WebApiContrib.IoC.StructureMap
 
             this.container = container;
 
-            this.container.Inject(typeof(IHttpControllerActivator), this);
+            this.container.Inject(typeof (IHttpControllerActivator), this);
         }
 
         public IDependencyScope BeginScope()
@@ -66,7 +66,7 @@ namespace WebApiContrib.IoC.StructureMap
 
         public IHttpController Create(HttpRequestMessage request, HttpControllerDescriptor controllerDescriptor, Type controllerType)
         {
-            return (IHttpController) container.GetInstance(controllerType);
+            return container.GetNestedContainer().GetInstance(controllerType) as IHttpController;
         }
     }
 }
