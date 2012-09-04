@@ -39,7 +39,9 @@ namespace WebApiContrib.IoC.StructureMap
 
         public void Dispose()
         {
-            container.Dispose();
+            if (container != null)
+                container.Dispose();
+            
             container = null;
         }
     }
