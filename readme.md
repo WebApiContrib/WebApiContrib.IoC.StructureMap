@@ -14,7 +14,7 @@ Using the WebApiContrib StructureMap container is easy.
 
     var config = GlobalConfiguration.Configuration;
     var container = GetYourOwnBuiltContainer(); // You build this up yourself.
-    config.ServiceResolver.SetServiceResolver(new StructureMapResolver(container);
+    config.DependencyResolver = new StructureMapResolver(container);
 
 One thing that is unique about this resolver is that it is also an instance of IHttpControllerActivator. Upon creation of the StructureMapResolver, it injects itself as the object to be returned when IHttpControllerActivator is requested.
 
