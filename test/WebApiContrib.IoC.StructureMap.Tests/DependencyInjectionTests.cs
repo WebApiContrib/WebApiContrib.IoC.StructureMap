@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Net.Http;
 using System.Web.Http;
+using Moq;
 using NUnit.Framework;
 using Should;
 using StructureMap;
@@ -76,6 +78,44 @@ namespace WebApiContrib.IoC.StructureMap.Tests.IoC
             var repositories = config.DependencyResolver.GetServices(typeof(IContactRepository));
 
             repositories.Count().ShouldEqual(0);
+        }
+
+        [Test]
+        public void StructureMapResolver_should_not_dispose_container()
+        {
+            var mockContainer = new Mock<IContainer>();
+
+            var resolver = new StructureMapResolver(mockContainer.Object);
+
+            resolver.Dispose();
+
+            mockContainer.Verify(c => c.Dispose(), Times.Never, "Should not have called Dispose on the container.");
+        }
+
+        [Test]
+        public void StructureMapResolver_should_throw_when_attempting_to_get_service_after_being_disposed()
+        {
+            var mockContainer = new Mock<IContainer>();
+
+            var resolver = new StructureMapResolver(mockContainer.Object);
+
+            resolver.Dispose();
+
+            Assert.That(() => resolver.GetService(typeof (IContactRepository)),
+                Throws.Exception.TypeOf<ObjectDisposedException>());
+        }
+
+        [Test]
+        public void StructureMapResolver_should_throw_when_attempting_to_get_services_after_being_disposed()
+        {
+            var mockContainer = new Mock<IContainer>();
+
+            var resolver = new StructureMapResolver(mockContainer.Object);
+
+            resolver.Dispose();
+
+            Assert.That(() => resolver.GetServices(typeof(IContactRepository)),
+                Throws.Exception.TypeOf<ObjectDisposedException>());
         }
     }
 }
